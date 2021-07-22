@@ -82,6 +82,12 @@ void	showWidth(int *length, char *string, t_printf *content)
 		showPrecision(length, content, string);
 		showString(length, &string[i]);
 	}
+	else
+	{
+		showPrecision(length, content, string);
+		showString(length, &string[i]);
+		showSpaces(content, string, length);
+	}
 }
 
 void	ft_digits(int *length, va_list ap, t_printf *content)
@@ -160,7 +166,10 @@ void	ft_apostro(t_printf *content, va_list ap)
 {
 	content->width = va_arg(ap, int);
 	if (content->width < 0)
+	{
 		content->width *= -1;
+		content->less = 1;
+	}
 }
 
 int	ft_specifyFlag(const char *str, int *length, t_printf *content, va_list ap)
