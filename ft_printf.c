@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   ft_printf.c                                        :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: pavon <pavon@student.42.fr>                +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/06/25 18:17:47 by dpavon-g          #+#    #+#             */
-/*   Updated: 2021/07/21 18:51:08 by pavon            ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "libftprintf.h"
 
 void	showString(int *length, char *string)
@@ -32,10 +20,10 @@ void	showSpaces(t_printf *content, char *str, int *length)
 	int aux;
 
 	aux = content->precision;
-	if (content->zero == 0)
-		value = ' ';
-	else
+	if (content->zero == 1 && content->precision == -1)
 		value = '0';
+	else
+		value = ' ';
 	len = (int)ft_strlen(str);
 	if (content->precision > len)
 	{
@@ -96,13 +84,19 @@ void	ft_digits(int *length, va_list ap, t_printf *content)
 	char *string;
 
 	num = va_arg(ap, int);
-	string = ft_itoa(num);
-	showWidth(length, string, content);
+	if (!(num == 0 && content->precision == 0))
+	{
+		string = ft_itoa(num);
+		showWidth(length, string, content);
+		free(string);
+	}
 }
 
 void	ft_specifyType(const char s, t_printf *content, va_list ap, int *length)
 {
 	if (s == 'd')
+		ft_digits(length, ap, content);
+	if (s == 'i')
 		ft_digits(length, ap, content);
 	// ft_isS(ap, length, content);
 	// if (s == 'd' || s == 'i')
