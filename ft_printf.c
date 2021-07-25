@@ -158,6 +158,11 @@ void	digits(int *length, va_list ap, t_printf *content)
 	int num;
 
 	num = va_arg(ap, int);
+	if (content->haveSpace == 1)
+	{
+		ft_putchar_fd(' ', 1);
+		(*length)++;
+	}
 	showNumber(length, num, content);
 }
 
@@ -298,6 +303,36 @@ void	hexadecimal(int *length, va_list ap, t_printf *content, char type)
 	free(str);
 }
 
+void	pointer(int *length, va_list ap, t_printf *content)
+{
+	unsigned long 	num;
+	char			*aux;
+	char			*string;
+	int				i;
+
+	i = 0;
+	num = va_arg(ap, long);
+	if (num != 0)
+	{
+		aux = ft_transformNumber(num, 1, 16);
+		string = ft_strjoin("0x", aux);
+		free(aux);
+	}
+	else
+		string = ft_strdup("(nil)");
+	if (content->less == 0)
+	{	
+		i = strSpaces(length, content, string);
+		finalNumber(length, content, &string[i]);
+	}
+	else
+	{
+		finalNumber(length, content, string);
+		strSpaces(length, content, string);
+	}
+	free(string);
+}
+
 void	specifyType(const char s, t_printf *content, va_list ap, int *length)
 {
 	if (s == 'd')
@@ -317,6 +352,8 @@ void	specifyType(const char s, t_printf *content, va_list ap, int *length)
 		unsigNum(length, ap, content);
 	else if (s == 'X' || s == 'x')
 		hexadecimal(length, ap, content, s);
+	else if (s == 'p')
+		pointer(length, ap, content);
 	// ft_isS(ap, length, content);
 	// if (s == 'd' || s == 'i')
 	// 	ft_isD(ap, length, content);
@@ -404,6 +441,8 @@ int	specifyFlag(const char *str, int *length, t_printf *content, va_list ap)
 			apostro(content, ap);
 		i++;
 	}
+	if (str[i] == '\0')
+		return (i);
 	if (ft_strchr(TYPES, str[i]) != 0)
 		specifyType(str[i], content, ap, length);
 	i++;

@@ -7,8 +7,9 @@ int	main(void)
 
 	//num = ft_printf("FAKE-> %0*.*d \n", 21, 10, -101);
 	//num2 = printf("REAL-> %0*.*d \n", 21, 10, -101);
-	num += ft_printf("FAKE-> %.x\n", 0);
-	num2 += printf("REAL-> %.x\n", 0);
+	num += ft_printf("FAKE-> %08.3i\n", 8375);
+	num2 += printf("REAL-> %08.3i\n", 8375);
+
 
 
 	printf("FAKE-> %d\n", num);
