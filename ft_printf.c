@@ -13,6 +13,49 @@ void	showString(int *length, char *string)
 	}
 }
 
+int	ft_lenFinal(unsigned long num, int base)
+{
+	int i;
+
+	i = 0;
+	if (num == 0)
+	{
+		i++;
+		return (i);
+	}
+	while (num > 0)
+	{
+		i++;
+		num /= base;
+	}
+	return (i);
+}
+
+char	*ft_transformNumber(unsigned long num, int type, int base)
+{
+	int		len;
+	char 	*number;
+	char 	*string;
+
+	number = NULL;
+	if (type == 0)
+		string = ft_strdup("0123456789ABCDEF");
+	else
+		string = ft_strdup("0123456789abcdef");
+	len = ft_lenFinal(num, base);
+	number = (char *)malloc(sizeof(char) * len + 1);
+	number[len] = '\0';
+	len--;
+	while (len >= 0)
+	{
+		number[len] = string[num % base];
+		num /= base;
+		len--;
+	}
+	free(string);
+	return (number);
+}
+
 int	strSpaces2(int *length, t_printf *content, char *str, int len)
 {
 	int		position;
@@ -201,6 +244,60 @@ void	string(int *length, va_list ap, t_printf *content)
 	free(str);
 }
 
+void	unsigNum(int *length, va_list ap, t_printf *content)
+{
+	unsigned int	num;
+	char			*str;
+	int				i;
+
+	num = va_arg(ap, unsigned int);
+	i = 0;
+	if (num == 0 && content->precision == 0)
+		str = ft_strdup("");
+	else
+		str = ft_transformNumber(num, 1, 10);
+	if (content->less == 0)
+	{	
+		i = strSpaces(length, content, str);
+		finalNumber(length, content, &str[i]);
+	}
+	else
+	{
+		finalNumber(length, content, str);
+		strSpaces(length, content, str);
+	}
+	free(str);	
+}
+
+void	hexadecimal(int *length, va_list ap, t_printf *content, char type)
+{
+	unsigned int	num;
+	char			*str;
+	int				i;
+	int				k;
+
+	num = va_arg(ap, unsigned int);
+	if (type == 'X')
+		k = 0;
+	else
+		k = 1;
+	if (num == 0 && content->precision == 0)
+		str = ft_strdup("");
+	else
+		str = ft_transformNumber(num, k, 16);
+	if (content->less == 0)
+	{	
+		i = strSpaces(length, content, str);
+		finalNumber(length, content, &str[i]);
+	}
+	else
+	{
+		finalNumber(length, content, str);
+		strSpaces(length, content, str);
+	}
+	free(str);
+}
+
 void	specifyType(const char s, t_printf *content, va_list ap, int *length)
 {
 	if (s == 'd')
@@ -211,6 +308,15 @@ void	specifyType(const char s, t_printf *content, va_list ap, int *length)
 		characters(length, ap, content);
 	else if (s == 's')
 		string(length, ap, content);
+	else if (s == '%')
+	{
+		ft_putchar_fd('%', 1);
+		(*length)++;
+	}
+	else if (s == 'u')
+		unsigNum(length, ap, content);
+	else if (s == 'X' || s == 'x')
+		hexadecimal(length, ap, content, s);
 	// ft_isS(ap, length, content);
 	// if (s == 'd' || s == 'i')
 	// 	ft_isD(ap, length, content);
