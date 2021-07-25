@@ -13,91 +13,204 @@ void	showString(int *length, char *string)
 	}
 }
 
-void	showSpaces(t_printf *content, char *str, int *length)
+int	strSpaces2(int *length, t_printf *content, char *str, int len)
 {
-	char value;
-	int len;
-	int aux;
-
-	aux = content->precision;
-	if (content->zero == 1 && content->precision == -1)
+	int		position;
+	char	value;
+	
+	position = 0;
+	if (content->zero == 1 && content->less == 0)
+	{
 		value = '0';
+		if (str[0] == '-')
+		{
+			ft_putchar_fd('-', 1);
+			(*length)++;
+			position++;
+		}
+	}
 	else
 		value = ' ';
-	len = (int)ft_strlen(str);
-	if (content->precision > len)
-	{
-		aux -= len;
-		len += aux;
-	}
-	while (content->width > len)
+	while (content->width > len && content->width > content->precision)
 	{
 		ft_putchar_fd(value, 1);
-		len++;
+		content->width--;
 		(*length)++;
 	}
+	return (position);
 }
 
-void	showPrecision(int *length, t_printf *content, char *str)
+int	strSpaces(int *length, t_printf *content, char *str)
 {
+	int		len;
+	int		position;
+
+	position = 0;
+	len = (int)ft_strlen(str);
+	if (content->precision != -1)
+	{
+		if (str[0] == '-' && content->precision >= len)
+			content->width--;
+		while (content->width > len && content->width > content->precision)
+		{
+			ft_putchar_fd(' ', 1);
+			content->width--;
+			(*length)++;
+		}
+	}
+	else
+		position = strSpaces2(length, content, str, len);
+	return (position);
+}
+
+void	finalNumber(int *length, t_printf *content, char *str)
+{
+	int i;
 	int len;
 
+	i = 0;
 	len = (int)ft_strlen(str);
-	if (str[0] == '-')
-		content->precision += 1;
+	if (str[i] == '-')
+	{
+		i++;
+		ft_putchar_fd('-', 1);
+		(*length)++;
+		len--;
+	}
 	while (content->precision > len)
 	{
 		ft_putchar_fd('0', 1);
-		len++;
 		(*length)++;
+		len++;
 	}
+
+	showString(length, &str[i]);
 }
 
-void	showWidth(int *length, char *string, t_printf *content)
+void	showNumber(int *length, int num, t_printf *content)
 {
-	int i;
-
+	char	*str;
+	int		i;
+	
 	i = 0;
-	if (string[i] == '-' && (content->zero == 1 || content->precision -1))
-	{
-		ft_putchar_fd('-', 1);
-		i++;
-		(*length)++;
-	}
+	if (num == 0 && content->precision == 0)
+		str = ft_strdup("");
+	else
+		str = ft_itoa(num);
 	if (content->less == 0)
-	{
-		showSpaces(content, string, length);
-		showPrecision(length, content, string);
-		showString(length, &string[i]);
+	{	
+		i = strSpaces(length, content, str);
+		finalNumber(length, content, &str[i]);
 	}
 	else
 	{
-		showPrecision(length, content, string);
-		showString(length, &string[i]);
-		showSpaces(content, string, length);
+		finalNumber(length, content, str);
+		strSpaces(length, content, str);
 	}
+	free(str);
 }
 
-void	ft_digits(int *length, va_list ap, t_printf *content)
+void	digits(int *length, va_list ap, t_printf *content)
 {
 	int num;
-	char *string;
 
 	num = va_arg(ap, int);
-	if (!(num == 0 && content->precision == 0))
+	showNumber(length, num, content);
+}
+
+void	showSpace(t_printf *content, int *length, int len)
+{
+	while (content->width > len)
 	{
-		string = ft_itoa(num);
-		showWidth(length, string, content);
-		free(string);
+		ft_putchar_fd(' ', 1);
+		(*length)++;
+		content->width--;
 	}
 }
 
-void	ft_specifyType(const char s, t_printf *content, va_list ap, int *length)
+void	characters(int *length, va_list ap, t_printf *content)
+{
+	char character;
+	
+	character = va_arg(ap, int);
+	if (content->less == 0)
+	{
+		(*length)++;
+		showSpace(content, length, 1);
+		ft_putchar_fd(character, 1);
+	}
+	else
+	{
+		(*length)++;
+		ft_putchar_fd(character, 1);
+		showSpace(content, length, 1);
+	}
+}
+
+void	stringSpace(int *length, t_printf *content, char *str)
+{
+	int len;
+
+	len = (int)ft_strlen(str);
+	if (content->precision < len && content->precision > -1)
+		len = content->precision;
+	while (content->width > len)
+	{
+		(*length)++;
+		ft_putchar_fd(' ', 1);
+		len++;
+	}
+
+}
+
+void	stringPrecision(int *length, t_printf *content, char *str)
+{
+	int len;
+	int i;
+
+	len = content->precision;
+	i = 0;
+	if (content->less == 0)
+		stringSpace(length, content, str);
+	if (len == -1)
+		showString(length, str);
+	while (len > 0 && str[i])
+	{
+		ft_putchar_fd(str[i], 1);
+		(*length)++;
+		len--; 
+		i++;
+	}
+	if (content->less == 1)
+		stringSpace(length, content, str);
+}
+
+void	string(int *length, va_list ap, t_printf *content)
+{
+	char *str;
+	
+	str = ft_strdup(va_arg(ap, char*));
+	if (!str)
+	{
+		if (content->precision > -1 && content->precision < 6)
+			content->precision = 0;
+		free(str);
+		str = ft_strdup("(null)");
+	}
+	stringPrecision(length, content, str);
+	free(str);
+}
+
+void	specifyType(const char s, t_printf *content, va_list ap, int *length)
 {
 	if (s == 'd')
-		ft_digits(length, ap, content);
-	if (s == 'i')
-		ft_digits(length, ap, content);
+		digits(length, ap, content);
+	else if (s == 'i')
+		digits(length, ap, content);
+	else if (s == 'c')
+		characters(length, ap, content);
+	else if (s == 's')
+		string(length, ap, content);
 	// ft_isS(ap, length, content);
 	// if (s == 'd' || s == 'i')
 	// 	ft_isD(ap, length, content);
@@ -116,7 +229,7 @@ void	ft_specifyType(const char s, t_printf *content, va_list ap, int *length)
 	// 	ft_isU(ap, length, content);
 }
 
-int	ft_Point(const char *str, t_printf *content, va_list ap)
+int	point(const char *str, t_printf *content, va_list ap)
 {
 	int i;
 
@@ -142,7 +255,7 @@ int	ft_Point(const char *str, t_printf *content, va_list ap)
 	return (i);
 }
 
-int	ft_width(const char *str, t_printf *content)
+int	width(const char *str, t_printf *content)
 {
 	int i;
 
@@ -156,7 +269,7 @@ int	ft_width(const char *str, t_printf *content)
 	return (i);
 }
 
-void	ft_apostro(t_printf *content, va_list ap)
+void	apostro(t_printf *content, va_list ap)
 {
 	content->width = va_arg(ap, int);
 	if (content->width < 0)
@@ -166,7 +279,7 @@ void	ft_apostro(t_printf *content, va_list ap)
 	}
 }
 
-int	ft_specifyFlag(const char *str, int *length, t_printf *content, va_list ap)
+int	specifyFlag(const char *str, int *length, t_printf *content, va_list ap)
 {
 	int i;
 
@@ -176,34 +289,35 @@ int	ft_specifyFlag(const char *str, int *length, t_printf *content, va_list ap)
 		if (str[i] == ' ')
 			content->haveSpace = 1;
 		else if (str[i] == '.')
-			i += ft_Point(&str[i], content, ap);
+			i += point(&str[i], content, ap);
 		else if (str[i] >= '0' && str[i] <= '9')
-			i += ft_width(&str[i], content);
+			i += width(&str[i], content);
 		else if (str[i] == '-')
 			content->less = 1;
 		else if (str[i] == '*')
-			ft_apostro(content, ap);
+			apostro(content, ap);
 		i++;
 	}
 	if (ft_strchr(TYPES, str[i]) != 0)
-		ft_specifyType(str[i], content, ap, length);
+		specifyType(str[i], content, ap, length);
 	i++;
 	return (i);
 }
 
-int	ft_specify(const char *str, int *length, va_list ap)
+int	specify(const char *str, int *length, va_list ap)
 {
 	int i;
+	
 	t_printf content;
 
 	ft_bzero(&content, sizeof(content));
 	content.precision = -1;
 	i = 0;
-	i += ft_specifyFlag(&str[i], length, &content, ap);
+	i += specifyFlag(&str[i], length, &content, ap);
 	return (i);
 }
 
-int	ft_travel(va_list ap, const char *str)
+int	travel(va_list ap, const char *str)
 {
 	int i;
 	int length;
@@ -221,7 +335,7 @@ int	ft_travel(va_list ap, const char *str)
 		else
 		{
 			i++;
-			i += ft_specify(&str[i], &length, ap);
+			i += specify(&str[i], &length, ap);
 		}
 	}
 
@@ -235,7 +349,7 @@ int	ft_printf(const char *str, ...)
 	total = 0;
 	va_list(ap);
 	va_start(ap, str);
-	total += ft_travel(ap, str);
+	total += travel(ap, str);
 	va_end(ap);
 	return (total);
 }
